@@ -1,0 +1,5 @@
+[package]
+name = "aoc2021"
+version = "0.1.0"
+authors = ["samouri"]
+edition = "2018"
