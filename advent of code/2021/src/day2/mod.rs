@@ -37,7 +37,7 @@ pub fn solve() -> std::io::Result<()> {
             depth += aim * count;
         }
     }
-    println!("Part 2: {}", depth * horizontal);
+    println!("Part 2: {}\n", depth * horizontal);
 
     Ok(())
 }
