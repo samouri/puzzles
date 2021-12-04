@@ -1,17 +1,15 @@
-use std::{convert::TryInto, fs};
+use std::fs;
 
 pub fn solve() -> std::io::Result<()> {
-    let path = "src/day3/input.txt";
+    let path = "src/day3/example.txt";
     let contents = fs::read_to_string(path).expect("Something went wrong reading the file");
     let readout: Vec<Vec<u32>> = contents.lines().map(|l| str_to_binary_arr(l)).collect();
 
-    let mut epsilon: String = "".to_owned();
-    let mut gamma: String = "".to_owned();
+    // Part 1
+    let mut epsilon: String = String::new();
+    let mut gamma: String = String::new();
     for i in 0..readout[0].len() {
-        let binary: Vec<u32> = readout.iter().map(|row| row[i]).collect();
-        let sum: u32 = binary.iter().sum();
-
-        if sum >= (binary.len() / 2).try_into().unwrap() {
+        if dominant_bit(&readout, i) == 1 {
             gamma += "1";
             epsilon += "0";
         } else {
@@ -25,6 +23,7 @@ pub fn solve() -> std::io::Result<()> {
             * i32::from_str_radix(gamma.as_str(), 2).unwrap()
     );
 
+    // Part 2
     let mut oxygen_candidates = Clone::clone(&readout);
     let mut co2_candidates = Clone::clone(&readout);
 
@@ -64,12 +63,8 @@ fn dominant_bit(bits: &Vec<Vec<u32>>, col: usize) -> u32 {
         }
     }
 
-    // if there is a tie, return 1, else return 0
-    if count >= 0 {
-        1
-    } else {
-        0
-    }
+    // casting numbers to bool works as you'd hope
+    (count >= 0) as u32
 }
 
 fn str_to_binary_arr(string: &str) -> Vec<u32> {
