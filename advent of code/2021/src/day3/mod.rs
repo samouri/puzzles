@@ -48,7 +48,7 @@ pub fn solve() -> std::io::Result<()> {
     let oxygen = binary_vec_to_str(&oxygen_candidates[0]);
     let co2 = binary_vec_to_str(&co2_candidates[0]);
 
-    println!("Part 2: {}", oxygen * co2);
+    println!("Part 2: {}\n", oxygen * co2);
 
     Ok(())
 }
