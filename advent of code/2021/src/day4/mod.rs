@@ -1,4 +1,4 @@
-use std::{collections::HashSet, fs, io::BufRead};
+use std::{collections::HashSet, fs};
 
 pub fn solve() -> std::io::Result<()> {
     let path = "src/day4/input.txt";
@@ -46,7 +46,7 @@ pub fn solve() -> std::io::Result<()> {
         draw_set.insert(*draw);
         if boards2.len() == 1 && check_board(&boards2[0], &draw_set) {
             let sum = unmarked_sum(&boards2[0], &draw_set);
-            println!("Part 2: {}", draw * sum);
+            println!("Part 2: {}\n", draw * sum);
             return Ok(());
         }
 
