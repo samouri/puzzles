@@ -26,7 +26,7 @@ pub fn solve() -> std::io::Result<()> {
         fishes[8] = parents; // the babies
     }
 
-    println!("Part 2: {}", fishes.iter().sum::<u64>());
+    println!("Part 2: {}\n", fishes.iter().sum::<u64>());
 
     Ok(())
 }
