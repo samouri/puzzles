@@ -1,26 +1,32 @@
 use std::fs;
 
 pub fn solve() -> std::io::Result<()> {
-    let path = "src/day6/example.txt";
-    let mut fishes: Vec<i32> = fs::read_to_string(path)
+    let path = "src/day6/input.txt";
+    let original_fishes: Vec<u8> = fs::read_to_string(path)
         .unwrap()
         .split(",")
-        .map(|s| -> i32 { s.parse::<i32>().unwrap() })
+        .map(|s| -> u8 { s.parse::<u8>().unwrap() })
         .collect();
 
-    for _day in 0..80 {
-        let len = fishes.len();
-
-        for i in 0..len {
-            fishes[i] -= 1;
-            if fishes[i] < 0 {
-                fishes[i] = 6;
-                fishes.push(8);
-            }
-        }
+    // Need a .group_by, but its currently unstable.
+    let mut fishes: [u64; 9] = [0; 9];
+    for fish in original_fishes {
+        fishes[fish as usize] += 1;
     }
 
-    println!("Part 1: {}", fishes.len());
+    for day in 0..256 {
+        if day == 80 {
+            println!("Part 1: {}", fishes.iter().sum::<u64>());
+        }
+        let parents = fishes[0];
+        for i in 0..8 {
+            fishes[i] = fishes[i + 1];
+        }
+        fishes[6] += parents; // parents
+        fishes[8] = parents; // the babies
+    }
+
+    println!("Part 2: {}", fishes.iter().sum::<u64>());
 
     Ok(())
 }
