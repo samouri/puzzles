@@ -2,7 +2,7 @@
 // mod day11;
 // mod day12;
 // mod day13;
-// mod day14;
+mod day14;
 mod day15;
 // mod day9;
 // mod day2;
@@ -46,8 +46,9 @@ fn main() -> std::io::Result<()> {
     // println!("Problem 13\n-----------");
     // day13::solve().unwrap();
 
-    // println!("Problem 14\n-----------");
-    // day14::solve()
+    println!("Problem 14\n-----------");
+    day14::solve().unwrap();
+    print!("\n");
 
     println!("Problem 15\n-----------");
     day15::solve()

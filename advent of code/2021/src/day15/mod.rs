@@ -14,7 +14,7 @@ pub fn solve() -> std::io::Result<()> {
                 .collect()
         })
         .collect();
-    println!("Part 1: {:?}", djikstra(&risk_map));
+    println!("Part 1: {:?}", djikstra(&risk_map).unwrap());
 
     // Most of the problem for part 2 is constructing the new array.
     let row_len = risk_map.len();
@@ -29,7 +29,7 @@ pub fn solve() -> std::io::Result<()> {
             }
         }
     }
-    println!("Part 2: {:?}", djikstra(&risk_map2));
+    println!("Part 2: {:?}", djikstra(&risk_map2).unwrap());
     Ok(())
 }
 
