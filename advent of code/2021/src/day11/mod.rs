@@ -1,6 +1,6 @@
 use std::fs;
 
-pub fn solve() -> std::io::Result<()> {
+pub fn solve() {
     let path = "src/day11/input.txt";
     let file_content: String = fs::read_to_string(path).unwrap();
 
@@ -27,8 +27,6 @@ pub fn solve() -> std::io::Result<()> {
         step_count += 1
     }
     println!("Part 2: {:?}", step_count);
-
-    Ok(())
 }
 
 fn step(octopi: &mut Vec<Vec<u32>>) -> u32 {
@@ -50,7 +48,6 @@ fn step(octopi: &mut Vec<Vec<u32>>) -> u32 {
             }
         }
     }
-    // println!("Initial tens: {:?}", tens);
 
     // Now DFS!
     while !tens.is_empty() {
@@ -90,11 +87,4 @@ fn neighbors(x: i32, y: i32) -> Vec<(usize, usize)> {
         }
     }
     return naybs;
-}
-
-fn pretty_print(octopi: &Vec<Vec<u32>>) {
-    for row in octopi {
-        let strs: Vec<String> = row.iter().map(|n| n.to_string()).collect();
-        println!("{}", strs.join(""));
-    }
 }

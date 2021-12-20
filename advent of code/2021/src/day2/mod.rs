@@ -1,6 +1,6 @@
 use std::fs;
 
-pub fn solve() -> std::io::Result<()> {
+pub fn solve() {
     let path = "src/day2/input.txt";
     let contents = fs::read_to_string(path).expect("Something went wrong reading the file");
     let instructions: Vec<(&str, i32)> = contents
@@ -38,6 +38,4 @@ pub fn solve() -> std::io::Result<()> {
         }
     }
     println!("Part 2: {}\n", depth * horizontal);
-
-    Ok(())
 }

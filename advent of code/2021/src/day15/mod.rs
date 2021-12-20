@@ -2,7 +2,7 @@ use std::cmp::Ordering;
 use std::collections::BinaryHeap;
 use std::fs;
 
-pub fn solve() -> std::io::Result<()> {
+pub fn solve() {
     let path = "src/day15/input.txt";
     let file_content: String = fs::read_to_string(path).unwrap();
 
@@ -30,7 +30,6 @@ pub fn solve() -> std::io::Result<()> {
         }
     }
     println!("Part 2: {:?}", djikstra(&risk_map2).unwrap());
-    Ok(())
 }
 
 fn djikstra(risk_map: &Vec<Vec<usize>>) -> Option<usize> {

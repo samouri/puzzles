@@ -13,27 +13,27 @@ mod day6;
 mod day7;
 mod day9;
 
-fn main() -> std::io::Result<()> {
+fn main() {
     println!("Problem 1\n-----------");
     day1::solve();
 
     println!("Problem 2\n-----------");
-    day2::solve().unwrap();
+    day2::solve();
 
     println!("Problem 3\n-----------");
-    day3::solve().unwrap();
+    day3::solve();
 
     println!("Problem 4\n-----------");
-    day4::solve().unwrap();
+    day4::solve();
 
     println!("Problem 5\n-----------");
-    day5::solve().unwrap();
+    day5::solve();
 
     println!("Problem 6\n-----------");
-    day6::solve().unwrap();
+    day6::solve();
 
     println!("Problem 7\n-----------");
-    day7::solve().unwrap();
+    day7::solve();
 
     println!("Problem 9\n-----------");
     day9::solve();
@@ -41,21 +41,18 @@ fn main() -> std::io::Result<()> {
     println!("Problem 10\n-----------");
     day10::solve();
 
-    Ok(())
+    println!("Problem 11\n-----------");
+    day11::solve();
 
-    // println!("Problem 11\n-----------");
-    // day11::solve().unwrap();
+    println!("Problem 12\n-----------");
+    day12::solve();
 
-    // println!("Problem 12\n-----------");
-    // day12::solve().unwrap();
+    println!("Problem 13\n-----------");
+    day13::solve();
 
-    // println!("Problem 13\n-----------");
-    // day13::solve().unwrap();
+    println!("Problem 14\n-----------");
+    day14::solve();
 
-    // println!("Problem 14\n-----------");
-    // day14::solve().unwrap();
-    // print!("\n");
-
-    // println!("Problem 15\n-----------");
-    // day15::solve()
+    println!("Problem 15\n-----------");
+    day15::solve()
 }

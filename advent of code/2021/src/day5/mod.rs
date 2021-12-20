@@ -2,7 +2,7 @@ use std::cmp::{max, min};
 use std::convert::TryFrom;
 use std::{collections::HashMap, fs};
 
-pub fn solve() -> std::io::Result<()> {
+pub fn solve() {
     let path = "src/day5/input.txt";
     let lines: Vec<Line> = fs::read_to_string(path)
         .unwrap()
@@ -41,8 +41,6 @@ pub fn solve() -> std::io::Result<()> {
         .filter(|c| (*(*c)) >= 2)
         .count();
     println!("Part 2: {}\n", count);
-
-    Ok(())
 }
 
 #[derive(Debug)]

@@ -80,8 +80,6 @@ fn matches(c1: char, c2: char) -> bool {
         || (c1 == '<' && c2 == '>')
 }
 
-// fn part_two(contents: &str) -> usize {}
-
 #[cfg(test)]
 mod tests {
     use super::*;

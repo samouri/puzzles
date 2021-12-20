@@ -1,6 +1,6 @@
 use std::{collections::HashSet, fs};
 
-pub fn solve() -> std::io::Result<()> {
+pub fn solve() {
     let path = "src/day4/input.txt";
     let contents: Vec<Vec<u32>> = fs::read_to_string(path)
         .unwrap()
@@ -47,7 +47,7 @@ pub fn solve() -> std::io::Result<()> {
         if boards2.len() == 1 && check_board(&boards2[0], &draw_set) {
             let sum = unmarked_sum(&boards2[0], &draw_set);
             println!("Part 2: {}\n", draw * sum);
-            return Ok(());
+            return;
         }
 
         boards2 = boards2
@@ -55,8 +55,6 @@ pub fn solve() -> std::io::Result<()> {
             .filter(|board| !check_board(board, &draw_set))
             .collect();
     }
-
-    Ok(())
 }
 
 fn check_board(board: &Vec<u32>, draws: &HashSet<u32>) -> bool {

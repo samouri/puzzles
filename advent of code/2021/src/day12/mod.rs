@@ -1,6 +1,6 @@
 use std::{collections::HashMap, fs};
 
-pub fn solve() -> std::io::Result<()> {
+pub fn solve() {
     let path = "src/day12/example.txt";
     let file_content: String = fs::read_to_string(path).unwrap();
     let mut caves: HashMap<&str, Vec<&str>> = HashMap::new();
@@ -24,8 +24,6 @@ pub fn solve() -> std::io::Result<()> {
 
     let paths = dfs(&caves, vec![], "start", true);
     println!("Part 2: {}", paths.len());
-
-    Ok(())
 }
 
 fn dfs<'a>(

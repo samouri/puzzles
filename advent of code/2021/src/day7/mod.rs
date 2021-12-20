@@ -1,6 +1,6 @@
 use std::fs;
 
-pub fn solve() -> std::io::Result<()> {
+pub fn solve() {
     let path = "src/day7/input.txt";
     let crab_orig: Vec<i32> = fs::read_to_string(path)
         .unwrap()
@@ -22,8 +22,6 @@ pub fn solve() -> std::io::Result<()> {
 
     println!("Part 1: {}", best_1);
     println!("Part 2: {}\n", best_2);
-
-    Ok(())
 }
 
 fn score_1(nums: &Vec<i32>, target: i32) -> i32 {

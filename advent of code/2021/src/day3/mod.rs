@@ -1,6 +1,6 @@
 use std::fs;
 
-pub fn solve() -> std::io::Result<()> {
+pub fn solve() {
     let path = "src/day3/example.txt";
     let contents = fs::read_to_string(path).expect("Something went wrong reading the file");
     let readout: Vec<Vec<u32>> = contents.lines().map(|l| str_to_binary_arr(l)).collect();
@@ -49,8 +49,6 @@ pub fn solve() -> std::io::Result<()> {
     let co2 = binary_vec_to_str(&co2_candidates[0]);
 
     println!("Part 2: {}\n", oxygen * co2);
-
-    Ok(())
 }
 
 fn dominant_bit(bits: &Vec<Vec<u32>>, col: usize) -> u32 {

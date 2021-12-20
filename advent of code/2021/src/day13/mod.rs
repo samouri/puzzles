@@ -1,6 +1,6 @@
 use std::{collections::HashMap, fs};
 
-pub fn solve() -> std::io::Result<()> {
+pub fn solve() {
     let path = "src/day13/input.txt";
     let file_content: String = fs::read_to_string(path).unwrap();
 
@@ -39,8 +39,6 @@ pub fn solve() -> std::io::Result<()> {
         }
         print!("\n");
     }
-
-    Ok(())
 }
 
 fn fold_paper(points: &HashMap<(u32, u32), bool>, fold: (&str, u32)) -> HashMap<(u32, u32), bool> {

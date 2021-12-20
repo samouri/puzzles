@@ -1,6 +1,6 @@
 use std::{collections::HashMap, fs};
 
-pub fn solve() -> std::io::Result<()> {
+pub fn solve() {
     let path = "src/day14/input.txt";
     let file_content: String = fs::read_to_string(path).unwrap();
     let (start, pairs_str) = file_content.split_once("\n\n").unwrap();
@@ -14,8 +14,7 @@ pub fn solve() -> std::io::Result<()> {
 
     println!("Part 1: {:?}", run(start, &rules, 10));
     println!("Part 2: {:?}", run(start, &rules, 40));
-
-    Ok(())
+    println!("");
 }
 
 fn run(initial: &str, rules: &HashMap<&str, &str>, steps: u32) -> usize {

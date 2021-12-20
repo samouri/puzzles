@@ -1,6 +1,6 @@
 use std::fs;
 
-pub fn solve() -> std::io::Result<()> {
+pub fn solve() {
     let path = "src/day6/input.txt";
     let original_fishes: Vec<u8> = fs::read_to_string(path)
         .unwrap()
@@ -27,6 +27,4 @@ pub fn solve() -> std::io::Result<()> {
     }
 
     println!("Part 2: {}\n", fishes.iter().sum::<u64>());
-
-    Ok(())
 }
