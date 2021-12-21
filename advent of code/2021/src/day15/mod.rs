@@ -30,6 +30,7 @@ pub fn solve() {
         }
     }
     println!("Part 2: {:?}", djikstra(&risk_map2).unwrap());
+    println!("");
 }
 
 fn djikstra(risk_map: &Vec<Vec<usize>>) -> Option<usize> {

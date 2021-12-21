@@ -2,6 +2,7 @@ pub fn solve() {
     let contents = include_str!("./input.txt");
     println!("Part 1: {}", part_one(contents));
     println!("Part 2: {}", part_two(contents));
+    println!("");
 }
 
 fn part_one(contents: &str) -> i64 {
