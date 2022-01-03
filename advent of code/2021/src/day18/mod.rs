@@ -58,6 +58,7 @@ fn parse_next<'a>(input: &'a str) -> (Value, &'a str) {
 
 fn assign_parents(v: Rc<RefCell<Value>>, parent: Rc<RefCell<Value>>) {
     let derefed = &mut *v.borrow_mut();
+
     match derefed {
         Value::Internal(node) => {
             node.parent = parent;
@@ -78,6 +79,17 @@ fn magnitude_helper(tree_val: Rc<RefCell<Value>>) -> usize {
             return 3 * magnitude_helper(Rc::clone(&node.left))
                 + 2 * magnitude_helper(Rc::clone(&node.right));
         }
+    }
+}
+
+fn add(a: Tree, b: Tree) -> Tree {
+    let root = Node {
+        parent: Rc::new(RefCell::new(Value::Leaf(0))),
+        left: a.root,
+        right: b.root,
+    };
+    Tree {
+        root: Rc::new(RefCell::new(root)),
     }
 }
 
@@ -113,24 +125,13 @@ mod tests {
         assert_eq!(magnitude(&parse(input)), 17);
     }
 
-    // #[test]
-    // fn holds_shit() {
-    //     let tree = Tree {
-    //         root: Node {
-    //             left: Value::Leaf(1),
-    //             right: Value::Leaf(2),
-    //         },
-    //     };
-    //     let left = tree.root.left;
-    //     let right = tree.root.right;
-    //     match (left, right) {
-    //         (Value::Leaf(n1), Value::Leaf(n2)) => {
-    //             assert_eq!(n1, 1);
-    //             assert_eq!(n2, 2);
-    //         }
-    //         _ => unreachable!(),
-    //     }
-    // }
+    #[test]
+    fn add_no_reduce() {
+        let a = parse("[1,9]");
+        let b = parse("[9,1]");
+
+        assert_eq!(magnitude(add(a, b)), 129);
+    }
 }
 
 // #[derive(PartialEq, Debug)]
