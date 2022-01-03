@@ -83,15 +83,74 @@ fn magnitude_helper(tree_val: Rc<RefCell<Value>>) -> usize {
 }
 
 fn add(a: Tree, b: Tree) -> Tree {
-    let root = Node {
-        parent: Rc::new(RefCell::new(Value::Leaf(0))),
+    let root = wrap(Value::Internal(Node {
+        parent: wrap(Value::Leaf(0)),
         left: a.root,
         right: b.root,
-    };
+    }));
+
+    let parent: &mut Value = &mut *root.borrow_mut();
+    match parent {
+        Value::Internal(r) => {
+            let left = &mut *r.left.borrow_mut();
+            match left {
+                Value::Internal(l) => l.parent = Rc::clone(&root),
+                _ => unreachable!(),
+            }
+            let right = &mut *r.right.borrow_mut();
+            match right {
+                Value::Internal(r) => r.parent = Rc::clone(&root),
+                _ => unreachable!(),
+            }
+        }
+        _ => unreachable!(),
+    }
+
     Tree {
-        root: Rc::new(RefCell::new(root)),
+        root: Rc::clone(&root),
     }
 }
+
+fn explode(value: Rc<RefCell<Value>>, depth: usize) -> bool {
+    match &*value.borrow_mut() {
+        Value::Internal(node) => {
+            if (depth >= 4) {
+                // let left_val = match &*node.left.borrow() {
+
+                // } ;
+                match &*node.parent.borrow_mut() {
+                    Value::Internal(p) => {
+                        if p.left == value {
+                            p.left.replace(Value::Leaf(0));
+                        } else {
+                            p.right.replace(Value::Leaf(0));
+                        }
+                    }
+                    _ => panic!(),
+                }
+                true
+            } else {
+                explode(Rc::clone(&node.left), depth + 1)
+                    || explode(Rc::clone(&node.right), depth + 1)
+            }
+        }
+        _ => false,
+    }
+}
+
+// is the value an internal node with 2 leafs
+// fn is_pair(value: Rc<RefCell<Value>>) -> bool {
+//     match &*value.borrow() {
+//         Value::Internal(node) => match &*node.left.borrow() {
+//             Value::Internal(_) => false,
+//             Value::Leaf(_) => match &*node.right.borrow() {
+//                 Value::Internal(_) => false,
+//                 Value::Leaf(_) => true,
+//             },
+//         },
+//         _ => panic!(),
+//     }
+// }
 
 #[cfg(test)]
 mod tests {
@@ -127,11 +186,29 @@ mod tests {
 
     #[test]
     fn add_no_reduce() {
-        let a = parse("[1,9]");
-        let b = parse("[9,1]");
+        let a = parse("[9,1]");
+        let b = parse("[1,9]");
 
-        assert_eq!(magnitude(add(a, b)), 129);
+        assert_eq!(magnitude(&add(a, b)), 129);
     }
+
+    // #[test]
+    // fn get_suc() {
+    //     let a = parse("[[1,2],[3,4]]");
+    //     let two = match &*a.root.borrow() {
+    //         Value::Internal(root_node) => {
+    //             match &*root_node.left.borrow() {
+    //                 Value::Internal(left_node) => {
+    //                     match &*left_node.right.borrow() {
+
+    //                     }
+    //                 },
+    //                 _ => unreachable!()
+    //             }
+    //         },
+    //         _ => unreachable!()
+    //     };
+    // }
 }
 
 // #[derive(PartialEq, Debug)]
