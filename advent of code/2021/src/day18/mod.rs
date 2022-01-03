@@ -1,4 +1,4 @@
-use std::{borrow::BorrowMut, cell::RefCell, rc::Rc};
+use std::{cell::RefCell, rc::Rc};
 
 pub fn solve() {
     part_one();
@@ -10,7 +10,7 @@ fn part_one() -> i64 {
 
 #[derive(PartialEq, Debug)]
 struct Tree {
-    root: Node,
+    root: Rc<RefCell<Value>>,
 }
 
 #[derive(PartialEq, Debug)]
@@ -32,42 +32,53 @@ enum Value {
 
 // Parse only returns the first snailfish number found in the str
 fn parse(input: &str) -> Tree {
-    // let parsed = parse_next(input).0;
-    // Tree { root: parse_next(input).0 }
-    match parse_next(input).0 {
-        Value::Internal(root) => Tree { root },
-        _ => unreachable!(),
-    }
+    let root = wrap(parse_next(input).0);
+    assign_parents(Rc::clone(&root), wrap(Value::Leaf(0)));
+    Tree { root }
 }
 
-fn parse_next<'a>(input: &'a str) -> (Rc<RefCell<Value>>, &'a str) {
+fn parse_next<'a>(input: &'a str) -> (Value, &'a str) {
     if input.starts_with("]") || input.starts_with(",") {
-        return parse_next(&input[1..], parent);
+        return parse_next(&input[1..]);
     }
 
     if input.starts_with("[") {
-        let mut node = Node {
-            left: wrap(Value::Leaf(0)),
-            right: wrap(Value::Leaf(0)),
-            parent: wrap(Value::Leaf(0)),
-        };
         let (left, remainder) = parse_next(&input[1..]);
         let (right, remainder) = parse_next(remainder);
-        let borrowed_left = left.borrow_mut();
-        // node.left = wrap(left);
-        // node.right = wrap(right);
+        let node = Node {
+            left: wrap(left),
+            right: wrap(right),
+            parent: wrap(Value::Leaf(0)),
+        };
         return (Value::Internal(node), remainder);
-        todo!()
     }
     let val = Value::Leaf(input.chars().next().unwrap().to_digit(10).unwrap() as usize);
     return (val, &input[1..]);
 }
 
-fn assign_parent(v: &mut Value, p: &Node) {
-    match v {
-        Value::Internal(node) => node.parent = wrap(Value::Internal(p)),
-        _ => unreachable!(),
+fn assign_parents(v: Rc<RefCell<Value>>, parent: Rc<RefCell<Value>>) {
+    let derefed = &mut *v.borrow_mut();
+    match derefed {
+        Value::Internal(node) => {
+            node.parent = parent;
+            assign_parents(Rc::clone(&node.left), Rc::clone(&v));
+            assign_parents(Rc::clone(&node.right), Rc::clone(&v));
+        }
+        Value::Leaf(_) => {}
     };
+}
+
+fn magnitude(tree: &Tree) -> usize {
+    magnitude_helper(Rc::clone(&tree.root))
+}
+fn magnitude_helper(tree_val: Rc<RefCell<Value>>) -> usize {
+    match &*tree_val.borrow() {
+        Value::Leaf(v) => *v,
+        Value::Internal(node) => {
+            return 3 * magnitude_helper(Rc::clone(&node.left))
+                + 2 * magnitude_helper(Rc::clone(&node.right));
+        }
+    }
 }
 
 #[cfg(test)]
@@ -79,18 +90,28 @@ mod tests {
         assert_eq!(part_one(), 42);
     }
 
-    // #[test]
-    // fn parse_easy() {
-    //     let input = "[1,2]";
-    //     let parsed = parse(input);
-    //     let expected = Tree {
-    //         root: Node {
-    //             left: wrap(Value::Leaf(1)),
-    //             right: wrap(Value::Leaf(2)),
-    //         },
-    //     };
-    //     assert_eq!(parsed, expected);
-    // }
+    #[test]
+    fn parse_easy() {
+        let input = "[1,2]";
+        let parsed = parse(input);
+        let expected = Tree {
+            root: wrap(Value::Internal(Node {
+                left: wrap(Value::Leaf(1)),
+                right: wrap(Value::Leaf(2)),
+                parent: wrap(Value::Leaf(0)),
+            })),
+        };
+        assert_eq!(parsed, expected);
+    }
+
+    #[test]
+    fn magnitude_easy() {
+        let input = "[[9,1],[1,9]]";
+        assert_eq!(magnitude(&parse(input)), 129);
+
+        let input = "[[1,1],1]";
+        assert_eq!(magnitude(&parse(input)), 17);
+    }
 
     // #[test]
     // fn holds_shit() {
