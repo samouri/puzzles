@@ -2,15 +2,30 @@ use std::{cell::RefCell, fmt, rc::Rc};
 
 pub fn solve() {
     println!("Part 1: {}", part_one(include_str!("./input.txt")));
+    println!("Part 2: {}", part_two(include_str!("./input.txt")));
 }
 
 fn part_one(contents: &str) -> usize {
-    let nums: Vec<&str> = include_str!("./example.txt").split("\n").collect();
+    let nums: Vec<&str> = contents.split("\n").collect();
     let sum = nums
         .iter()
         .skip(1)
         .fold(parse(nums[0]), |acc, &item| add(acc, parse(item)));
     magnitude(&sum)
+}
+
+fn part_two(contents: &str) -> usize {
+    let nums: Vec<&str> = contents.split("\n").collect();
+    let mut max: usize = 0;
+    for (i1, &x) in nums.iter().enumerate() {
+        for (i2, &y) in nums.iter().enumerate() {
+            if i1 == i2 {
+                continue;
+            }
+            max = usize::max(max, magnitude(&add(parse(x), parse(y))));
+        }
+    }
+    max
 }
 
 #[derive(PartialEq)]
@@ -212,7 +227,7 @@ fn get_next(node: Option<Rc<RefCell<Value>>>) -> Option<Rc<RefCell<Value>>> {
 // }
 
 fn split(node: Rc<RefCell<Value>>) -> bool {
-    if let Value::Internal(internal) = &*node.borrow_mut() {
+    if let Value::Internal(internal) = &*node.borrow() {
         return split(internal.left.clone()) || split(internal.right.clone());
     }
     let new_node = if let Value::Leaf(leaf) = &*node.borrow() {
@@ -220,11 +235,11 @@ fn split(node: Rc<RefCell<Value>>) -> bool {
             None
         } else {
             let new_left_node = Value::Leaf(LeafNode {
-                parent: None,
+                parent: Some(node.clone()),
                 val: leaf.val / 2,
             });
             let new_right_node = Value::Leaf(LeafNode {
-                parent: None,
+                parent: Some(node.clone()),
                 val: leaf.val / 2 + leaf.val % 2,
             });
             Some(Value::Internal(InternalNode {
@@ -386,7 +401,12 @@ mod tests {
     }
 
     #[test]
-    fn example() {
+    fn part_one_example() {
         assert_eq!(part_one(include_str!("./example.txt")), 4140);
+    }
+
+    #[test]
+    fn part_two_example() {
+        assert_eq!(part_two(include_str!("./example.txt")), 3993);
     }
 }
