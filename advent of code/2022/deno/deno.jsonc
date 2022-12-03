@@ -1,0 +1,6 @@
+{
+  "tasks": {
+    "solve": "deno run --allow-read index.ts",
+    "test": "deno test --allow-read"
+  }
+}
