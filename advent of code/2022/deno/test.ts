@@ -5,6 +5,8 @@ import { solvers } from "./index.ts";
 
 const solutions = {
   1: [24000, 45000],
+  2: [15, 12],
+  3: [157, 70],
   4: [2, 4],
   5: ["CMZ", "MCD"],
   6: [7, 19],
