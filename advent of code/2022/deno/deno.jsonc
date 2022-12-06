@@ -2,5 +2,8 @@
   "tasks": {
     "solve": "deno run --allow-read index.ts",
     "test": "deno test --allow-read"
+  },
+  "fmt": {
+    "options": { "lineWidth": 120 }
   }
 }

@@ -5,8 +5,9 @@ import "./utils.ts";
 import { day1 } from "./day1.ts";
 import { day4 } from "./day4.ts";
 import { day5 } from "./day5.ts";
+import { day6 } from "./day6.ts";
 
-export const solvers: any = { day1, day4, day5 };
+export const solvers: any = { day1, day4, day5, day6 };
 
 if (Deno.args.length >= 0) {
   for (const arg of Deno.args) {
