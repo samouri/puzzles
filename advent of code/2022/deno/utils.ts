@@ -6,6 +6,10 @@ declare global {
     sum: () => number
     chunk: (size: number) => T[][]
     intersect: (other: Iterable<T>[]) => Array<T>
+    toSet: () => Set<T>
+    isUnique: () => boolean
+    min: () => number
+    max: () => number
   }
 
   interface Set<T> {
@@ -23,6 +27,22 @@ Array.prototype.sortNumbersDesc = function () {
 
 Array.prototype.take = function (size) {
   return this.slice(0, size)
+}
+
+Array.prototype.isUnique = function () {
+  return this.toSet().size == this.length
+}
+
+Array.prototype.toSet = function () {
+  return new Set(this)
+}
+
+Array.prototype.max = function () {
+  return Math.max(...this)
+}
+
+Array.prototype.min = function () {
+  return Math.min(...this)
 }
 
 Array.prototype.sum = function () {

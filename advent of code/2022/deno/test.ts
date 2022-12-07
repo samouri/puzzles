@@ -10,6 +10,7 @@ const solutions = {
   4: [2, 4],
   5: ["CMZ", "MCD"],
   6: [7, 19],
+  7: [95437, 24933642],
 };
 for (const [day, solution] of Object.entries(solutions)) {
   const name = `day${day}`;
