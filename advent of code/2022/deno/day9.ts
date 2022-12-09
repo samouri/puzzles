@@ -13,7 +13,7 @@ export function day9(test = false) {
   const tail2Visited = new Set([snake2.last().join(",")])
 
   for (const dir of movements) {
-    move(snake2[0], getOffsetForMovements(dir))
+    move(snake1[0], getOffsetForMovements(dir))
     for (let i = 1; i < snake1.length; i++) {
       follow(snake1[i - 1], snake1[i])
     }
@@ -21,7 +21,7 @@ export function day9(test = false) {
   }
 
   for (const dir of movements) {
-    move(snake1[0], getOffsetForMovements(dir))
+    move(snake2[0], getOffsetForMovements(dir))
     for (let i = 1; i < snake2.length; i++) {
       follow(snake2[i - 1], snake2[i])
     }
@@ -53,7 +53,7 @@ function follow(head: Pos, tail: Pos) {
   const [diffX, diffY] = getDiff(head, tail)
   // If they are in the same column row, only move if 2 away.
   if (diffX === 0 || diffY === 0) {
-    move(tail, [Math.trunc(diffX / 2), Math.sign(diffY / 2)])
+    move(tail, [Math.trunc(diffX / 2), Math.trunc(diffY / 2)])
   } else if (Math.abs(diffX) + Math.abs(diffY) > 2) {
     move(tail, [Math.sign(diffX), Math.sign(diffY)])
   }
@@ -61,7 +61,7 @@ function follow(head: Pos, tail: Pos) {
 
 function printSet(s: Set<string>) {
   for (let y = 8; y >= -5; y--) {
-    let row = `${y}: `
+    let row = `${y.toFixed(0).padStart(2, "0")}: `
     for (let x = -15; x < 20; x++) {
       if (s.has([x, y].join(","))) {
         row += "x"
