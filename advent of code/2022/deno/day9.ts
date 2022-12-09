@@ -2,56 +2,35 @@ import { readInput } from "./utils.ts"
 
 export function day9(test = false) {
   const input = readInput(9, test).trim()
-  const movements = input // Flatten movements
+  const dirs: any = { R: [1, 0], L: [-1, 0], U: [0, 1], D: [0, -1] }
+  const movements: [number, number][] = input // Flatten movements to a series of 1-step vectors
     .split("\n")
     .map((line) => line.split(" "))
     .flatMap(([dir, num]) => new Array(+num).fill(dir))
+    .map((dir) => dirs[dir])
 
-  const snake1: Pos[] = Array.from({ length: 2 }).map(() => [0, 0])
-  const snake2: Pos[] = Array.from({ length: 10 }).map(() => [0, 0])
-  const tail1Visited = new Set([snake1.last().join(",")])
-  const tail2Visited = new Set([snake2.last().join(",")])
-
-  for (const dir of movements) {
-    move(snake1[0], getOffsetForMovements(dir))
-    for (let i = 1; i < snake1.length; i++) {
-      follow(snake1[i - 1], snake1[i])
+  function run(knots: number) {
+    const rope: Vec[] = Array.from({ length: knots }).map(() => [0, 0])
+    const visited = new Set([rope.last().join(",")])
+    for (const movement of movements) {
+      move(rope[0], movement)
+      rope.slice(1).forEach((_, i) => follow(rope[i], rope[i + 1]))
+      visited.add(rope.last().join(","))
     }
-    tail1Visited.add(snake1.last().join(","))
+    return visited.size
   }
 
-  for (const dir of movements) {
-    move(snake2[0], getOffsetForMovements(dir))
-    for (let i = 1; i < snake2.length; i++) {
-      follow(snake2[i - 1], snake2[i])
-    }
-    tail2Visited.add(snake2.last().join(","))
-  }
-
-  return [tail1Visited.size, tail2Visited.size]
+  return [run(2), run(10)]
 }
 
-type Pos = [number, number]
-function getDiff(pos1: Pos, pos2: Pos): [number, number] {
-  return [pos1[0] - pos2[0], pos1[1] - pos2[1]]
-}
-function move(pos: Pos, offset: [number, number]) {
+type Vec = [number, number]
+function move(pos: Vec, offset: Vec) {
   pos[0] += offset[0]
   pos[1] += offset[1]
 }
 
-function getOffsetForMovements(dir: string): [number, number] {
-  if (dir === "R") return [1, 0]
-  if (dir === "L") return [-1, 0]
-  if (dir === "U") return [0, 1]
-  if (dir === "D") return [0, -1]
-
-  throw new Error(`Unexpected dir: ${dir}`)
-}
-
-function follow(head: Pos, tail: Pos) {
-  const [diffX, diffY] = getDiff(head, tail)
-  // If they are in the same column row, only move if 2 away.
+function follow(head: Vec, tail: Vec) {
+  const [diffX, diffY] = [head[0] - tail[0], head[1] - tail[1]]
   if (diffX === 0 || diffY === 0) {
     move(tail, [Math.trunc(diffX / 2), Math.trunc(diffY / 2)])
   } else if (Math.abs(diffX) + Math.abs(diffY) > 2) {
