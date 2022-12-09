@@ -10,6 +10,7 @@ declare global {
     isUnique: () => boolean
     min: () => number
     max: () => number
+    last(): T
   }
 
   interface Set<T> {
@@ -37,8 +38,8 @@ Array.prototype.toSet = function () {
   return new Set(this)
 }
 
-Array.prototype.max = function () {
-  return Math.max(...this)
+Array.prototype.last = function () {
+  return this.at(-1)!
 }
 
 Array.prototype.min = function () {

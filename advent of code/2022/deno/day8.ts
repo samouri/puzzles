@@ -11,20 +11,19 @@ export function day8(test = false) {
   const rowCount = grid.length
   const colCount = grid[0].length
 
-  // Row by row
   for (let row = 0; row < rowCount; row++) {
     let max1 = -Infinity
     let max2 = -Infinity
     // Left to right --> col1
     // Right to left --> col2
-    for (let col = 0; col < colCount; col++) {
-      const col2 = colCount - col - 1
+    for (let col1 = 0; col1 < colCount; col1++) {
+      const col2 = colCount - col1 - 1
 
-      const val1 = grid[row][col]
+      const val1 = grid[row][col1]
       const val2 = grid[row][col2]
       if (val1 > max1) {
         max1 = val1
-        visible.add(getKey(row, col))
+        visible.add(getKey(row, col1))
       }
       if (val2 > max2) {
         max2 = val2
@@ -33,7 +32,6 @@ export function day8(test = false) {
     }
   }
 
-  // Column by column
   for (let col = 0; col < colCount; col++) {
     // Top to bottom --> row1
     // Bottom to top --> row2
