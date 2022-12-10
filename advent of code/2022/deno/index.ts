@@ -11,8 +11,9 @@ import { day6 } from "./day6.ts"
 import { day7 } from "./day7.ts"
 import { day8 } from "./day8.ts"
 import { day9 } from "./day9.ts"
+import { day10 } from "./day10.ts"
 
-export const solvers: any = { day1, day2, day3, day4, day5, day6, day7, day8, day9 }
+export const solvers: any = { day1, day2, day3, day4, day5, day6, day7, day8, day9, day10 }
 
 if (Deno.args.length >= 0) {
   for (const arg of Deno.args) {
