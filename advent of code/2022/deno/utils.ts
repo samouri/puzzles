@@ -1,9 +1,14 @@
 declare global {
+  interface Number {
+    times: (cb: (i: number) => void) => void
+  }
+
   interface Array<T> {
     sortNumbersAsc: () => T[]
     sortNumbersDesc: () => T[]
     take: (size: number) => T[]
     sum: () => number
+    product: () => number
     chunk: (size: number) => T[][]
     intersect: (other: Iterable<T>[]) => Array<T>
     toSet: () => Set<T>
@@ -15,6 +20,12 @@ declare global {
 
   interface Set<T> {
     intersect: (other: Iterable<T>[]) => Set<T>
+  }
+}
+
+Number.prototype.times = function (cb) {
+  for (let i = 0; i < this; i++) {
+    cb(i)
   }
 }
 
@@ -50,6 +61,10 @@ Array.prototype.sum = function () {
   return this.reduce((a, b) => b + a)
 }
 
+Array.prototype.product = function () {
+  return this.reduce((a, b) => b * a)
+}
+
 Array.prototype.chunk = function (size) {
   const chunked = []
   for (let i = 0; i < this.length - size + 1; i += size) {
@@ -77,6 +92,10 @@ Set.prototype.intersect = function (other) {
     }
   }
   return combined
+}
+
+export function identity<T>(x: T): T {
+  return x
 }
 
 export function readInput(day: number, example = false) {

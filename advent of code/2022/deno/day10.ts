@@ -34,7 +34,9 @@ export function day10(test = false) {
       }
       cycle++
     }
-    console.log(str)
+    if (!test) {
+      console.log(str)
+    }
   }
 
   return [part1, 0]
