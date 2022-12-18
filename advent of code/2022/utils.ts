@@ -99,5 +99,5 @@ export function identity<T>(x: T): T {
 }
 
 export function readInput(day: number, example = false) {
-  return new TextDecoder().decode(Deno.readFileSync(`../inputs/day${day}${example ? "-example" : ""}.txt`))
+  return new TextDecoder().decode(Deno.readFileSync(`inputs/day${day}${example ? "-example" : ""}.txt`))
 }

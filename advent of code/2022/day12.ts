@@ -4,7 +4,7 @@ export function day12(test = false) {
   const grid: string[][] = readInput(12, test)
     .trim()
     .split("\n")
-    .map((line) => line.split(""))
+    .map((l) => l.split(""))
 
   const best: Map<string, number> = new Map()
   function search(row: number, col: number, count = 0) {
