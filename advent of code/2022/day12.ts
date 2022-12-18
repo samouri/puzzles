@@ -21,30 +21,17 @@ export function day12(test = false) {
     }
   }
 
-  let start = [0, 0]
-  let end = [0, 0]
-  for (let row = 0; row < grid.length; row++) {
-    for (let col = 0; col < grid[row].length; col++) {
-      if (grid[row][col] === "S") {
-        start = [row, col]
-      } else if (grid[row][col] === "E") {
-        end = [row, col]
-      }
-    }
-  }
+  const start = grid.findIndex2d((row, col) => grid[row][col] === "S")!
+  const end = grid.findIndex2d((row, col) => grid[row][col] === "E")!
 
-  search(start[0], start[1])
+  search(...start)
+  const part1 = best.get(getKey(...end))
 
-  const part1 = best.get(getKey(end[0], end[1]))
+  grid.forEach2d((row, col) => {
+    if (grid[row][col] === "a") search(row, col)
+  })
+  const part2 = best.get(getKey(...end))
 
-  for (let row = 0; row < grid.length; row++) {
-    for (let col = 0; col < grid[row].length; col++) {
-      if (grid[row][col] === "a") {
-        search(row, col)
-      }
-    }
-  }
-  const part2 = best.get(getKey(end[0], end[1]))
   return [part1, part2]
 }
 

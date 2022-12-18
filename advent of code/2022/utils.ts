@@ -16,6 +16,8 @@ declare global {
     min: () => number
     max: () => number
     last(): T
+    findIndex2d: (cb: (row: number, col: number) => boolean) => null | [number, number]
+    forEach2d: (cb: (row: number, col: number) => any) => void
   }
 
   interface Set<T> {
@@ -82,6 +84,23 @@ Array.prototype.intersect = function (other) {
     }
   }
   return combined
+}
+
+Array.prototype.findIndex2d = function (cb) {
+  const rowLength = this.length
+  for (let row = 0; row < rowLength; row++) {
+    const colLen = this[row].length
+    for (let col = 0; col < colLen; col++) {
+      if (cb(row, col)) {
+        return [row, col]
+      }
+    }
+  }
+  return null
+}
+
+Array.prototype.forEach2d = function (cb) {
+  this.findIndex2d((row, col) => cb(row, col) && false)
 }
 
 Set.prototype.intersect = function (other) {
