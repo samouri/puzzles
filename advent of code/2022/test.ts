@@ -15,8 +15,15 @@ const solutions = {
   9: [88, 36],
   10: [13140, 0],
   11: [10605, 2713310158],
-  12: [31, 29]
+  12: [31, 29],
+  13: [13, 140],
+  14: [0, 0],
+  15: [0, 0],
+  16: [0, 0],
+  17: [0, 0],
+  18: [0, 0],
 }
+
 for (const [day, solution] of Object.entries(solutions)) {
   const name = `day${day}`
   Deno.test(name, () => {
