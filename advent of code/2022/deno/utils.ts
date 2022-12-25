@@ -113,6 +113,30 @@ Set.prototype.intersect = function (other) {
   return combined
 }
 
+export class Map2d<K, V> {
+  map = new Map<string, V>()
+
+  getCompoundKey(keys: K[]): string {
+    return keys.join(",")
+  }
+
+  set(keys: K[], v: V) {
+    return this.map.set(this.getCompoundKey(keys), v)
+  }
+
+  get(keys: K[]) {
+    return this.map.get(this.getCompoundKey(keys))
+  }
+
+  clear() {
+    return this.map.clear()
+  }
+
+  keys() {
+    return this.map.keys()
+  }
+}
+
 export function identity<T>(x: T): T {
   return x
 }

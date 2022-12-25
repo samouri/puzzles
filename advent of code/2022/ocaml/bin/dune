@@ -1,0 +1,6 @@
+(executable
+ (public_name solve)
+ (name solve)
+ (libraries lib)
+ (preprocess
+  (pps ppx_jane ppx_inline_test)))
