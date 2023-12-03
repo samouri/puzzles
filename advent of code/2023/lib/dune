@@ -2,7 +2,5 @@
  (name lib)
  (inline_tests)
  (libraries core core_unix re2)
- (flags
-  (:standard -warn-error -A))
  (preprocess
   (pps ppx_jane ppx_inline_test ppx_assert)))

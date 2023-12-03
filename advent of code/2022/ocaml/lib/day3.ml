@@ -1,5 +1,9 @@
 open Core
 
+type t = int
+
+include Solution.Stringable_int
+
 let intersect (chars : char list list) =
   let sets = List.map ~f:Char.Set.of_list chars in
   let intersection = List.reduce_exn ~f:Set.inter sets in
@@ -12,7 +16,7 @@ let priority c =
   | 'A' .. 'Z' -> 27 + (code c - code 'A')
   | _ -> assert false
 
-let solve ~(file : string) =
+let solve ?(file = "day3.txt") () =
   let input = Utils.read_lines file |> List.map ~f:String.to_list in
   let split_half line =
     let mid = List.length line / 2 in
@@ -32,4 +36,4 @@ let solve ~(file : string) =
   (part1, part2)
 
 let%test_unit _ =
-  [%test_eq: int * int] (solve ~file:"day3-example.txt") (157, 70)
+  [%test_eq: int * int] (solve ~file:"day3-example.txt" ()) (157, 70)

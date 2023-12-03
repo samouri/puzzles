@@ -3,9 +3,7 @@ open Core
 let solve ~(file : string) =
   let input = Utils.read_file file in
   let raw_initial_stacks, raw_procedures =
-    match Utils.split input "\n\n" with
-    | [ stacks; procedures ] -> (stacks, procedures)
-    | _ -> failwith (sprintf "Unexpected input: %s" input)
+    Utils.split input "\n\n" |> Utils.tuple_exn
   in
   let stacks =
     raw_initial_stacks |> String.split_lines |> List.drop_last_exn
@@ -23,8 +21,7 @@ let solve ~(file : string) =
          | _ -> failwith (sprintf "Unexpected input"))
   in
 
-  let stacks1 = Array.copy stacks in
-  let stacks2 = Array.copy stacks in
+  let stacks1, stacks2 = (Array.copy stacks, Array.copy stacks) in
   List.iter procedures ~f:(fun (num, src, dst) ->
       let src, dst = (src - 1, dst - 1) in
       let moved, new_src = List.split_n stacks1.(src) num in

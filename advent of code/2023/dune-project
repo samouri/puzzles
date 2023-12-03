@@ -1,23 +1,19 @@
-(lang dune 3.6)
+(lang dune 3.11)
 
-(name ocaml)
+(name aoc2023)
 
 (generate_opam_files true)
 
 (source
- (github username/reponame))
+ (github samouri/puzzles))
 
 (authors "Jake Fried")
-
-(maintainers "Jake Fried")
 
 (license MIT)
 
 
-(documentation https://url/to/documentation)
-
 (package
- (name ocaml)
+ (name aoc2023)
  (synopsis "A short synopsis")
  (description "A longer description")
  (depends ocaml dune)

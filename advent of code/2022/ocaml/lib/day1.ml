@@ -1,6 +1,10 @@
 open Core
 
-let solve file =
+type t = int
+
+include Solution.Stringable_int
+
+let solve ?(file = "day1.txt") () =
   let input = Utils.read_file file in
   let elves = Utils.split input "\n\n" |> List.map ~f:String.split_lines in
   let elf_sums =
@@ -12,4 +16,4 @@ let solve file =
   (part1, part2)
 
 let%test_unit "Day one" =
-  [%test_eq: int * int] (solve "day1-example.txt") (24000, 45000)
+  [%test_eq: int * int] (solve ~file:"day1-example.txt" ()) (24000, 45000)

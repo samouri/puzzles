@@ -1,6 +1,10 @@
 open Core
 
-let solve ~(file:string) =
+type t = int
+
+include Solution.Stringable_int
+
+let solve ?(file = "day2.txt") () =
   let input = Utils.read_file file |> String.split_lines in
   let score1 = function
     | "A Z" -> 3 | "B X" -> 1 | "C Y" -> 2 (* Losses *)
@@ -18,4 +22,4 @@ let solve ~(file:string) =
   let part2 = List.sum (module Int) ~f:score2 input in
   (part1, part2)
 
-let%test_unit _ = [%test_eq: int * int] (solve ~file:"day2-example.txt") (15, 12)
+let%test_unit _ = [%test_eq: int * int] (solve ~file:"day2-example.txt" ()) (15, 12)
