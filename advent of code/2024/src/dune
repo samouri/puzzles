@@ -1,0 +1,6 @@
+(library
+ (name aoc_2024)
+ (inline_tests  (deps (glob_files ../inputs/*.txt)))
+ (libraries core core_unix re2)
+ (preprocess
+  (pps ppx_jane ppx_inline_test ppx_assert)))
