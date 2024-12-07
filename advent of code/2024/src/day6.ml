@@ -16,7 +16,7 @@ module Position = struct
   module T = struct
     type t = { row : int; col : int } [@@deriving equal, hash, sexp, compare]
 
-    let move t direction =
+    let move (t : t) (direction : Direction.t) =
       match direction with
       | Direction.Up -> { t with row = t.row - 1 }
       | Down -> { t with row = t.row + 1 }
@@ -24,8 +24,8 @@ module Position = struct
       | Right -> { t with col = t.col + 1 }
   end
 
-  include Core.Hashable.Make (T)
-  include Core.Comparable.Make (T)
+  include Hashable.Make (T)
+  include Comparable.Make (T)
   include T
 end
 
@@ -73,21 +73,25 @@ let parse_input puzzle_input =
   in
   (grid_area, guard)
 
-let part1 (puzzle_input : string) =
-  let grid, guard = parse_input puzzle_input in
+let get_seen_set grid guard =
   let guard = ref guard in
   let seen = Position.Hash_set.create () in
   while Guard.is_in_grid !guard grid do
     Hash_set.add seen !guard.position;
     guard := Guard.step !guard grid
   done;
-  Hash_set.length seen
+  seen
+
+let part1 (puzzle_input : string) =
+  let grid, guard = parse_input puzzle_input in
+  get_seen_set grid guard |> Hash_set.length
 
 let part2 (puzzle_input : string) =
   let grid, guard = parse_input puzzle_input in
   let indices =
-    Array.concat_mapi grid ~f:(fun row_i row ->
-        Array.mapi row ~f:(fun col_i _ -> (row_i, col_i)))
+    (* Optimization 1: only try places the guard would have visited. *)
+    get_seen_set grid guard |> Hash_set.to_array
+    |> Array.map ~f:(fun ({ row; col } : Position.t) -> (row, col))
     |> Array.filter ~f:(fun (row, col) ->
            (* Filter out the guard's current position and any existing obstacle indices *)
            let pos : Position.t = { row; col } in
@@ -95,7 +99,8 @@ let part2 (puzzle_input : string) =
            && not (Char.equal grid.(row).(col) '#'))
   in
   Array.count indices ~f:(fun (row, col) ->
-      let grid = Array.copy (Array.map grid ~f:Array.copy) in
+      let prev_value = grid.(row).(col) in
+      (* Optimization: modify the grid in-place then restore after traversal. *)
       grid.(row).(col) <- '#';
       let seen = Guard.Hash_set.of_list [ guard ] in
       let cycled = ref false in
@@ -105,7 +110,8 @@ let part2 (puzzle_input : string) =
         guard := Guard.step !guard grid;
         if Hash_set.mem seen !guard then cycled := true
       done;
-      Hash_set.mem seen !guard)
+      grid.(row).(col) <- prev_value;
+      !cycled)
 
 let example_input = Utils.read_file "../inputs/day6-example.txt"
 let real_input = Utils.read_file "../inputs/day6-input.txt"
