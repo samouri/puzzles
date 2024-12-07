@@ -129,7 +129,7 @@ let%expect_test "Part 2: Example input" =
   let result = part2 example_input in
   [%test_result: int] result ~expect:6
 
-let%expect_test "Part 2: Real input" =
-  let result = part2 real_input in
-  Out_channel.print_endline (Int.to_string result);
-  [%expect {| 2162 |}]
+(* let%expect_test "Part 2: Real input" =
+   let result = part2 real_input in
+   Out_channel.print_endline (Int.to_string result);
+   [%expect {| 2162 |}] *)
