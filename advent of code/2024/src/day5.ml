@@ -1,4 +1,5 @@
 open! Core
+open! Import
 
 let parse_puzzle_input puzzle_input =
   let page_ordering_str, updates_str =

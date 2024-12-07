@@ -1,4 +1,5 @@
 open! Core
+open! Import
 
 let example_input = Utils.read_file "../inputs/day2-example.txt"
 let real_input = Utils.read_file "../inputs/day2-input.txt"

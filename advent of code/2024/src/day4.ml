@@ -1,8 +1,9 @@
 open! Core
+open! Import
 
 let parse_grid puzzle_input =
   puzzle_input |> String.split_lines
-  |> List.map ~f:(Fn.compose List.to_array String.to_list)
+  |> List.map ~f:(String.to_list >> List.to_array)
   |> List.to_array
 
 let is_valid ~grid row col =

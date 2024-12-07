@@ -1,4 +1,5 @@
 open! Core
+open! Import
 
 let example_input = {|
 3   4

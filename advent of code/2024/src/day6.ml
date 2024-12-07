@@ -1,4 +1,5 @@
 open! Core
+open! Import
 
 module Direction = struct
   type t = Up | Down | Left | Right [@@deriving sexp, hash, compare]
