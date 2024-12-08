@@ -15,7 +15,7 @@ let rec can_spell row col ~grid ~word ~direction =
   if not (is_valid ~grid row col) then false
   else
     let current_char = grid.(row).(col) in
-    let char_needed, remaining = (List.hd_exn word, List.tl_exn word) in
+    let char_needed, remaining = Utils.head_and_tl_exn word in
     if not (Char.equal current_char char_needed) then false
     else if List.is_empty remaining then true
     else
