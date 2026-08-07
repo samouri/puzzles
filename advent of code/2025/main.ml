@@ -79,11 +79,8 @@ L82
   let solve2 input = 
     let dial = ref 50 in
     let rotations = parse input in
-    ignore (dbg (__POS_OF__ rotations));
     let sum = ref 0 in
     List.iter (fun r -> 
-      (* print_rotation r; *)
-      (* print_endline ("crosses: " ^ (string_of_int (times_crosses_0 !dial r))); *)
       sum := !sum + times_crosses_0 !dial r;
       dial := rotate !dial r;
       )
@@ -91,4 +88,4 @@ L82
     print_int !sum
 end
 
-let () = One.solve2 One.real;;
+let () = One.solve2 One.example;;
