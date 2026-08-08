@@ -32,6 +32,7 @@
  * Usage:
  *
  *   #use "debug.ml";;
+ *   Debug.set_limits ~depth:200 ~steps:10_000;;
  *
  *   type direction = Left | Right
  *
@@ -45,9 +46,9 @@
  *
  *   ocaml day1.ml
  *
- * The first [Debug.to_string] call for a source file does the compilation and Typedtree
- * search.  The results are cached, so later calls at the same or other source
- * locations do not invoke [ocamlc] again.
+ * The first [Debug.to_string] call for a source file does the compilation and
+ * Typedtree search.  The results are cached, so later calls at the same or
+ * other source locations do not invoke [ocamlc] again.
  *
  * Intended for OCaml 5.x.  This deliberately relies on unstable
  * compiler-libs internals.  Compiler-libs is useful but is not a stable API;
@@ -112,6 +113,12 @@ type dbg_pos = string * int * int * int
 type dbg_site =
   { ty : Types.type_expr
   ; env : Env.t
+  ; load_path : Load_path.Dir.t list
+  }
+
+type dbg_source =
+  { structure : Typedtree.structure
+  ; load_path : Load_path.Dir.t list
   }
 
 let dbg_fail fmt =
@@ -135,13 +142,36 @@ let absolute_path path =
   then Filename.concat (Sys.getcwd ()) path
   else path
 
+(* [Load_path] is global compiler-libs state shared with the live toplevel.
+   Rebuilding a summarized CMT environment, and sometimes printing through
+   that environment, may need the exact paths recorded when the CMT was
+   produced.  Temporarily install those directories, clear [Envaux]'s cache,
+   and restore the original directory objects afterward.
+
+   We deliberately use [reset]/[append_dir] rather than [Load_path.init]:
+   [init] would also replace the live toplevel's auto-include callback, while
+   [reset] is documented to remove only the directories. *)
+let replace_load_path dirs =
+  Load_path.reset ();
+  List.iter Load_path.append_dir dirs;
+  Envaux.reset_cache ()
+
+let with_load_path dirs f =
+  let saved = Load_path.get () in
+  Fun.protect
+    ~finally:(fun () -> replace_load_path saved)
+    (fun () ->
+      replace_load_path dirs;
+      f ())
+
 (* Toplevel directives such as [#use] are understood by [ocaml], but they are
    not structure items that [ocamlc] can compile in an ordinary [.ml]
-   compilation unit.  The temporary source therefore blanks directive lines.
+   compilation unit.  Ordinary [#use] directives are therefore expanded
+   recursively into the temporary source.  Other directives are blanked.
 
-   We replace each directive with an empty line rather than deleting it so
-   all later line numbers remain unchanged.  This intentionally recognizes
-   only a directive whose [#] is the first non-whitespace character. *)
+   We recognize directives only when [#] is the first non-whitespace
+   character, matching the useful scripting form without attempting to
+   reimplement OCaml's complete toplevel parser. *)
 let is_toplevel_directive_line line =
   let rec first_non_space i =
     if i = String.length line then None
@@ -154,11 +184,95 @@ let is_toplevel_directive_line line =
   | Some '#' -> true
   | _ -> false
 
-let strip_toplevel_directives source =
+let parse_use_directive line =
+  if not (is_toplevel_directive_line line) then
+    None
+  else
+    try
+      Some
+        (Scanf.sscanf
+           (String.trim line)
+           "#use %S;;"
+           Fun.id)
+    with
+    | Scanf.Scan_failure _ | End_of_file | Failure _ ->
+        None
+
+(* Resolve [.] and [..] lexically so differently-spelled paths to the same
+   source do not evade include-cycle detection.  The debugger's shell-based
+   compilation workflow is Unix-oriented, as is [Filename.quote]. *)
+let normalize_absolute_path path =
+  let absolute = absolute_path path in
+  let components = String.split_on_char '/' absolute in
+  let rec collect acc = function
+    | [] ->
+        List.rev acc
+    | "" :: rest | "." :: rest ->
+        collect acc rest
+    | ".." :: rest ->
+        collect
+          (match acc with _ :: tail -> tail | [] -> [])
+          rest
+    | component :: rest ->
+        collect (component :: acc) rest
+  in
+  "/" ^ String.concat "/" (collect [] components)
+
+let debug_source_path =
+  normalize_absolute_path __FILE__
+
+let rec expand_uses
+    ~actual_path
+    ~reported_filename
+    ~include_stack
+    source
+  =
   source
   |> String.split_on_char '\n'
-  |> List.map (fun line ->
-       if is_toplevel_directive_line line then "" else line)
+  |> List.mapi (fun index line ->
+       match parse_use_directive line with
+       | Some included_filename ->
+           let included_path =
+             if Filename.is_relative included_filename then
+               Filename.concat
+                 (Filename.dirname actual_path)
+                 included_filename
+             else
+               included_filename
+           in
+           let included_path = normalize_absolute_path included_path in
+
+           (* [debug.ml] itself is represented by the small injected module
+              below.  Expanding its compiler-libs directives into an ordinary
+              compilation unit would be both invalid and unnecessary. *)
+           if included_path = debug_source_path then
+             ""
+           else if List.mem included_path include_stack then
+             dbg_fail
+               "cyclic #use involving %S"
+               included_path
+           else if not (Sys.file_exists included_path) then
+             dbg_fail
+               "#use source %S (resolved to %S) does not exist"
+               included_filename
+               included_path
+           else
+             let included_source = read_file included_path in
+             let expanded =
+               expand_uses
+                 ~actual_path:included_path
+                 ~reported_filename:included_filename
+                 ~include_stack:(included_path :: include_stack)
+                 included_source
+             in
+             Printf.sprintf
+               "# 1 %S\n%s\n# %d %S"
+               included_filename
+               expanded
+               (index + 2)
+               reported_filename
+       | None ->
+           if is_toplevel_directive_line line then "" else line)
   |> String.concat "\n"
 
 (* The temporary file is a normal compilation unit rather than a toplevel
@@ -174,11 +288,22 @@ let strip_toplevel_directives source =
    preprocessors.  It tells the compiler that the following text came from
    line 1 of the real script.  Consequently, locations recorded in the CMT
    match the position produced while the real script runs. *)
-let source_for_typechecking ~reported_filename source =
+let source_for_typechecking ~actual_path ~reported_filename source =
+  let expanded =
+    expand_uses
+      ~actual_path
+      ~reported_filename
+      ~include_stack:[normalize_absolute_path actual_path]
+      source
+  in
   Printf.sprintf
-    "module Debug = struct let to_string (_, _) = \"\" end\n# 1 %S\n%s"
+    "module Debug = struct\n\
+     let to_string (_, _) = \"\"\n\
+     let set_limits ~depth ~steps = ignore (depth + steps)\n\
+     end\n\
+     # 1 %S\n%s"
     reported_filename
-    (strip_toplevel_directives source)
+    expanded
 
 (* [ocamlc] may create several sibling files.  Register every possible path
    before invoking it so an exception or compiler error does not leave junk
@@ -222,7 +347,10 @@ let compile_cmt ~reported_filename =
 
   let source = read_file actual_source in
   let generated =
-    source_for_typechecking ~reported_filename source
+    source_for_typechecking
+      ~actual_path:actual_source
+      ~reported_filename
+      source
   in
 
   let temp_ml = Filename.temp_file "ocaml_dbg_" ".ml" in
@@ -234,16 +362,16 @@ let compile_cmt ~reported_filename =
   let temp_dir = Filename.dirname temp_ml in
   let temp_base = Filename.basename temp_ml in
   let source_dir = Filename.dirname actual_source in
-
-  (* Some environments stored in a CMT are compact summaries.  Reconstructing
-     them later may require finding standard-library or project [.cmi] files.
-     [Compmisc.init_path] initializes compiler-libs' own [Load_path] using the
-     current OCaml installation, with the script directory as a local include
-     directory.  This is separate from the toplevel's [#directory] search
-     path above. *)
-  Compmisc.init_path ~dir:source_dir ();
   let err_file = Filename.temp_file "ocaml_dbg_" ".err" in
   remember_temp err_file;
+
+  (* Use the bytecode compiler installed beside this running OCaml, not an
+     unrelated [ocamlc] found through [$PATH].  CMT files are compiler-version
+     specific and are unmarshalled into this process, so the producer must
+     match the running compiler-libs installation. *)
+  let ocamlc =
+    Filename.concat Config.bindir ("ocamlc" ^ Config.ext_exe)
+  in
 
   (* The flags mean:
 
@@ -259,8 +387,9 @@ let compile_cmt ~reported_filename =
      fails. *)
   let command =
     Printf.sprintf
-      "cd %s && ocamlc -bin-annot -stop-after typing -w -a -I %s %s 2>%s"
+      "cd %s && %s -bin-annot -stop-after typing -w -a -I %s %s 2>%s"
       (Filename.quote temp_dir)
+      (Filename.quote ocamlc)
       (Filename.quote source_dir)
       (Filename.quote temp_base)
       (Filename.quote err_file)
@@ -352,7 +481,11 @@ let payload_type (e : Typedtree.expression) =
    expression, pattern, module, and so on.  We override only its [expr]
    callback, record matching expressions, and then call the default callback
    to keep walking into the expression's children. *)
-let find_site_in_structure pos (structure : Typedtree.structure) =
+let find_site_in_structure
+    ~load_path
+    pos
+    (structure : Typedtree.structure)
+  =
   let candidates = ref [] in
 
   let expr self (e : Typedtree.expression) =
@@ -389,6 +522,7 @@ let find_site_in_structure pos (structure : Typedtree.structure) =
          value printer.  Without this step, ordinary types such as [list] and
          local variants may be printed as [<abstr>]. *)
       ; env = Envaux.env_of_only_summary e.exp_env
+      ; load_path
       }
   | [] ->
       let file, line, c0, c1 = pos in
@@ -399,13 +533,13 @@ let find_site_in_structure pos (structure : Typedtree.structure) =
 (* Reading and rebuilding a Typedtree is the expensive part.  One source file
    has one structure, so cache it by the filename reported by [__POS_OF__]. *)
 let typed_structures :
-    (string, Typedtree.structure) Hashtbl.t =
+    (string, dbg_source) Hashtbl.t =
   Hashtbl.create 3
 
 let structure_for_source reported_filename =
   match Hashtbl.find_opt typed_structures reported_filename with
-  | Some structure ->
-      structure
+  | Some source ->
+      source
   | None ->
       let cmt = compile_cmt ~reported_filename in
       let structure =
@@ -424,8 +558,17 @@ let structure_for_source reported_filename =
               "CMT for %S does not contain an implementation Typedtree"
               reported_filename
       in
-      Hashtbl.add typed_structures reported_filename structure;
-      structure
+      let load_path =
+        cmt.Cmt_format.cmt_loadpath
+        |> List.map (fun path ->
+             if Filename.is_relative path
+             then Filename.concat cmt.Cmt_format.cmt_builddir path
+             else path)
+        |> List.map Load_path.Dir.create
+      in
+      let source = { structure; load_path } in
+      Hashtbl.add typed_structures reported_filename source;
+      source
 
 (* Cache the final type/environment pair per call site as well.  A loop may
    execute the same [Debug.to_string] call thousands of times; only the live
@@ -444,8 +587,14 @@ let site_for_pos (((file, _, _, _) as pos) : dbg_pos) =
   | Some site ->
       site
   | None ->
-      let structure = structure_for_source file in
-      let site = find_site_in_structure pos structure in
+      let source = structure_for_source file in
+      let site =
+        with_load_path source.load_path (fun () ->
+          find_site_in_structure
+            ~load_path:source.load_path
+            pos
+            source.structure)
+      in
       Hashtbl.add sites key site;
       site
 
@@ -470,11 +619,39 @@ let site_for_pos (((file, _, _, _) as pos) : dbg_pos) =
    [Format.asprintf] supplies an in-memory formatter and returns everything
    written to it as a string. *)
 module Debug = struct
+  (* These are Debug-specific limits.  [to_string] installs them only while
+     the value is rendered, then restores the live toplevel's own settings.
+     [depth] bounds nesting; [steps] bounds the total printing work. *)
+  let printer_depth = ref !Toploop.max_printer_depth
+  let printer_steps = ref !Toploop.max_printer_steps
+
+  let set_limits ~depth ~steps =
+    if depth < 0 then
+      invalid_arg "Debug.set_limits: depth must be non-negative";
+    if steps < 0 then
+      invalid_arg "Debug.set_limits: steps must be non-negative";
+    printer_depth := depth;
+    printer_steps := steps
+
+  let with_limits f =
+    let saved_depth = !Toploop.max_printer_depth in
+    let saved_steps = !Toploop.max_printer_steps in
+    Fun.protect
+      ~finally:(fun () ->
+        Toploop.max_printer_depth := saved_depth;
+        Toploop.max_printer_steps := saved_steps)
+      (fun () ->
+        Toploop.max_printer_depth := !printer_depth;
+        Toploop.max_printer_steps := !printer_steps;
+        f ())
+
   let to_string (pos, value) =
     let site = site_for_pos pos in
-    Format.asprintf
-      "%a"
-      (fun ppf () ->
-        Toploop.print_value site.env (Obj.repr value) ppf site.ty)
-      ()
+    with_load_path site.load_path (fun () ->
+      with_limits (fun () ->
+        Format.asprintf
+          "%a"
+          (fun ppf () ->
+            Toploop.print_value site.env (Obj.repr value) ppf site.ty)
+          ()))
 end
