@@ -1,10 +1,21 @@
 (*
- * Advent of Code 2025 Solutions. 
- *)
-
-(*  Uncomment to use a generic datatype print function. 
+ * Advent of Code 2025 solutions.
  *
- *  print_endiline (Debug.to_string ( __POS_OF__ <any>))
+ * This file is intentionally a toplevel script, not a compilation unit.
+ * Run it directly with:
+ *
+ *   ocaml main.ml
+ *
+ * Keeping it as a script makes each puzzle quick to run and leaves room for
+ * toplevel-only experiments.  In particular, the [#use "debug.ml"] directive
+ * below enables the generic structural printer:
+ *
+ *   print_endline (Debug.to_string (__POS_OF__ value))
+ *
+ * [#use] is a toplevel directive rather than ordinary [.ml] syntax, so tools
+ * that treat this file as a compiled module may report it as a syntax error
+ * while it is enabled.  That mismatch is expected; [ocaml main.ml] is the
+ * intended execution environment.
  *)
 #use "debug.ml"
 
@@ -17,21 +28,6 @@ module Utils = struct
   let assert_int expected actual =
     if actual <> expected
     then failwith (Printf.sprintf "expected %d, got %d" expected actual)
-  ;;
-
-  let string_of_char c = String.make 1 c
-
-  let splice_string s ~start ~delete ~insert =
-    let before = String.sub s 0 start in
-    let after_start = start + delete in
-    let after = String.sub s after_start (String.length s - after_start) in
-    before ^ insert ^ after
-  ;;
-
-  let int_of_digit c =
-    if c < '0' || c > '9'
-    then invalid_arg "int_of_digit: expected a decimal digit"
-    else Char.code c - Char.code '0'
   ;;
 end
 
@@ -121,25 +117,6 @@ module Two = struct
 
   let is_invalid_part_2 id =
     let len = String.length id in
-    let was_invalid = ref false in
-    for chunk_size = 1 to len / 2 do
-      if len mod chunk_size = 0
-      then (
-        let all_same = ref true in
-        let first_chunk = String.sub id 0 chunk_size in
-        let chunk_count = len / chunk_size in
-        for chunk_index = 1 to chunk_count - 1 do
-          let offset = chunk_index * chunk_size in
-          let this_chunk = String.sub id offset chunk_size in
-          all_same := !all_same && this_chunk = first_chunk
-        done;
-        was_invalid := !was_invalid || !all_same)
-    done;
-    !was_invalid
-  ;;
-
-  let is_invalid_part_2'' id =
-    let len = String.length id in
     let repeats_in_chunks size =
       let first = String.sub id 0 size in
       Seq.init ((len / size) - 1) (fun i -> String.sub id ((i + 1) * size) size)
@@ -153,18 +130,12 @@ module Two = struct
   let real = lazy (Utils.read_input 2)
 
   let sum_invalid_ids input ~is_invalid =
-    let product_id_ranges = parse input in
-    let invalid_ids =
-      let all_product_ids =
-        List.map
-          (fun (start, end_) ->
-            List.init (end_ - start + 1) (fun i -> start + i |> string_of_int))
-          product_id_ranges
-        |> List.flatten
-      in
-      List.filter is_invalid all_product_ids |> List.map (fun str -> int_of_string str)
-    in
-    List.fold_left ( + ) 0 invalid_ids
+    parse input
+    |> List.to_seq
+    |> Seq.flat_map (fun (start, end_) ->
+      Seq.init (end_ - start + 1) (fun offset -> start + offset))
+    |> Seq.filter (fun id -> is_invalid (string_of_int id))
+    |> Seq.fold_left ( + ) 0
   ;;
 
   let part1 () =
@@ -240,15 +211,17 @@ L82
 
   let part1 () =
     let go input =
-      let dial = ref 50 in
       let rotations = parse input in
-      let sum_0 = ref 0 in
-      List.iter
-        (fun r ->
-          dial := rotate !dial r;
-          if !dial = 0 then incr sum_0)
-        rotations;
-      !sum_0
+      let _, sum_0 =
+        List.fold_left
+          (fun (dial, sum_0) rotation ->
+            let dial = rotate dial rotation in
+            let sum_0 = if dial = 0 then sum_0 + 1 else sum_0 in
+            dial, sum_0)
+          (50, 0)
+          rotations
+      in
+      sum_0
     in
     let example_result = go example in
     Utils.assert_int 3 example_result;
@@ -258,15 +231,16 @@ L82
 
   let part2 () =
     let go input =
-      let dial = ref 50 in
       let rotations = parse input in
-      let sum = ref 0 in
-      List.iter
-        (fun r ->
-          sum := !sum + times_crosses_0 !dial r;
-          dial := rotate !dial r)
-        rotations;
-      !sum
+      let _, sum =
+        List.fold_left
+          (fun (dial, sum) rotation ->
+            let sum = sum + times_crosses_0 dial rotation in
+            rotate dial rotation, sum)
+          (50, 0)
+          rotations
+      in
+      sum
     in
     let example_result = go example in
     Utils.assert_int 6 example_result;
