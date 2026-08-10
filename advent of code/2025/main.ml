@@ -6,24 +6,91 @@
  *
  *  print_endiline (Debug.to_string ( __POS_OF__ <any>))
  *)
-(* #use "debug.ml" *)
+#use "debug.ml"
 
 module Utils = struct
-  let read_file path =
-    let ch = open_in_bin path in
-    let s = really_input_string ch (in_channel_length ch) in
-    close_in ch;
-    s
-  ;;
-
   let read_input day =
     let path = Printf.sprintf "./inputs/input_%d.txt" day in
-    read_file path
+    In_channel.with_open_bin path In_channel.input_all
   ;;
 
   let assert_int expected actual =
     if actual <> expected
     then failwith (Printf.sprintf "expected %d, got %d" expected actual)
+  ;;
+
+  let string_of_char c = String.make 1 c
+
+  let splice_string s ~start ~delete ~insert =
+    let before = String.sub s 0 start in
+    let after_start = start + delete in
+    let after = String.sub s after_start (String.length s - after_start) in
+    before ^ insert ^ after
+  ;;
+
+  let int_of_digit c =
+    if c < '0' || c > '9'
+    then invalid_arg "int_of_digit: expected a decimal digit"
+    else Char.code c - Char.code '0'
+  ;;
+end
+
+module Three = struct
+  let example = {|
+987654321111111
+811111111111119
+234234234234278
+818181911112111
+  |}
+
+  let real = lazy (Utils.read_input 3)
+  let parse input = input |> String.trim |> String.split_on_char '\n'
+
+  let max_joltage bank ~count =
+    let len = String.length bank in
+    let rec choose ~start ~remaining selected =
+      if remaining = 0
+      then selected |> List.rev |> List.to_seq |> String.of_seq |> int_of_string
+      else (
+        let final_candidate = len - remaining in
+        let best_idx = ref start in
+        for i = start + 1 to final_candidate do
+          if bank.[i] > bank.[!best_idx] then best_idx := i
+        done;
+        choose
+          ~start:(!best_idx + 1)
+          ~remaining:(remaining - 1)
+          (bank.[!best_idx] :: selected))
+    in
+    choose ~start:0 ~remaining:count []
+  ;;
+
+  let part1 () =
+    let go input =
+      let banks = parse input in
+      let max_joltages = banks |> List.map (max_joltage ~count:2) in
+      (* print_endline (Debug.to_string (__POS_OF__ max_joltages)); *)
+      let sum = max_joltages |> List.fold_left ( + ) 0 in
+      sum
+    in
+    let example_result = go example in
+    Utils.assert_int 357 example_result;
+    let real_result = go (Lazy.force real) in
+    Printf.printf "Day 3 part 1: %d\n" real_result
+  ;;
+
+  let part2 () =
+    let go input =
+      let banks = parse input in
+      let max_joltages = banks |> List.map (max_joltage ~count:12) in
+      (* print_endline (Debug.to_string (__POS_OF__ max_joltages)); *)
+      let sum = max_joltages |> List.fold_left ( + ) 0 in
+      sum
+    in
+    let example_result = go example in
+    Utils.assert_int 3121910778619 example_result;
+    let real_result = go (Lazy.force real) in
+    Printf.printf "Day 3 part 2: %d\n" real_result
   ;;
 end
 
@@ -171,29 +238,41 @@ L82
     List.map parse_line lines
   ;;
 
-  let part1 input =
-    let dial = ref 50 in
-    let rotations = parse input in
-    let sum_0 = ref 0 in
-    List.iter
-      (fun r ->
-        dial := rotate !dial r;
-        if !dial = 0 then incr sum_0)
-      rotations;
-    print_int !sum_0
+  let part1 () =
+    let go input =
+      let dial = ref 50 in
+      let rotations = parse input in
+      let sum_0 = ref 0 in
+      List.iter
+        (fun r ->
+          dial := rotate !dial r;
+          if !dial = 0 then incr sum_0)
+        rotations;
+      !sum_0
+    in
+    let example_result = go example in
+    Utils.assert_int 3 example_result;
+    let real_result = go (Lazy.force real) in
+    Printf.printf "Day 1 part 1: %d\n" real_result
   ;;
 
-  let part2 input =
-    let dial = ref 50 in
-    let rotations = parse input in
-    let sum = ref 0 in
-    List.iter
-      (fun r ->
-        sum := !sum + times_crosses_0 !dial r;
-        dial := rotate !dial r)
-      rotations;
-    print_int !sum
+  let part2 () =
+    let go input =
+      let dial = ref 50 in
+      let rotations = parse input in
+      let sum = ref 0 in
+      List.iter
+        (fun r ->
+          sum := !sum + times_crosses_0 !dial r;
+          dial := rotate !dial r)
+        rotations;
+      !sum
+    in
+    let example_result = go example in
+    Utils.assert_int 6 example_result;
+    let real_result = go (Lazy.force real) in
+    Printf.printf "Day 1 part 2: %d\n" real_result
   ;;
 end
 
-let () = Two.part2 ()
+let () = Three.part2 ()
