@@ -192,7 +192,7 @@ let parse_use_directive line =
       Some
         (Scanf.sscanf
            (String.trim line)
-           "#use %S;;"
+           "#use %S"
            Fun.id)
     with
     | Scanf.Scan_failure _ | End_of_file | Failure _ ->
