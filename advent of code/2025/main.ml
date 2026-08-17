@@ -31,6 +31,109 @@ module Utils = struct
   ;;
 end
 
+module Four = struct
+  let example =
+    {|
+..@@.@@@@.
+@@@.@.@.@@
+@@@@@.@.@@
+@.@@@@..@.
+@@.@@@@.@@
+.@@@@@@@.@
+.@.@.@.@@@
+@.@@@.@@@@
+.@@@@@@@@.
+@.@.@@@.@.
+  |}
+  ;;
+
+  let explode s = Array.init (String.length s) (String.get s)
+  let real = lazy (Utils.read_input 4)
+
+  let parse input =
+    input
+    |> String.trim
+    |> String.split_on_char '\n'
+    |> Array.of_list
+    |> Array.map explode
+  ;;
+
+  let directions =
+    [
+      (-1,-1); (0,-1); (1,-1);
+      (-1, 0);         (1, 0);
+      (-1, 1); (0, 1); (1, 1);
+    ] [@ocamlformat "disable"]
+  ;;
+
+  let is_valid (x, y) (max_x, max_y) = 0 <= x && x < max_x && 0 <= y && y < max_y
+
+  let paper_neighbors grid (x, y) =
+    let bounds = Array.length grid.(0), Array.length grid in
+    List.fold_left
+      (fun sum (dx, dy) ->
+        let in_bounds = is_valid (x + dx, y + dy) bounds in
+        if in_bounds && grid.(x + dx).(y + dy) = '@' then sum + 1 else sum)
+      0
+      directions
+  ;;
+
+  let part1 () =
+    let go input =
+      let grid = parse input in
+      let row_count, col_count = Array.length grid.(0), Array.length grid in
+      let indices =
+        Seq.init row_count (fun x -> Seq.init col_count (fun y -> x, y))
+        |> Seq.flat_map Fun.id
+      in
+      Seq.fold_left
+        (fun sum (row_i, col_i) ->
+          let marked = paper_neighbors grid (row_i, col_i) in
+          let is_paper = grid.(row_i).(col_i) = '@' in
+          if is_paper && marked < 4 then sum + 1 else sum)
+        0
+        indices
+    in
+    let example_result = go example in
+    Utils.assert_int 13 example_result;
+    let real_result = go (Lazy.force real) in
+    Printf.printf "Day 4 part 1: %d\n" real_result
+  ;;
+
+  let part2 () =
+    let go input =
+      let grid = parse input in
+      let row_count, col_count = Array.length grid.(0), Array.length grid in
+      let removed = ref 0 in
+      let can_remove = ref true in
+      while !can_remove do
+        let indices =
+          Seq.init row_count (fun x -> Seq.init col_count (fun y -> x, y))
+          |> Seq.flat_map Fun.id
+        in
+        let accessible =
+          Seq.fold_left
+            (fun acc (row_i, col_i) ->
+              let marked = paper_neighbors grid (row_i, col_i) in
+              let is_paper = grid.(row_i).(col_i) = '@' in
+              if is_paper && marked < 4 then (row_i, col_i) :: acc else acc)
+            []
+            indices
+        in
+        removed := !removed + List.length accessible;
+        can_remove := List.length accessible > 0;
+        (* Now update the grid for next round *)
+        List.iter (fun (row_i, col_i) -> grid.(row_i).(col_i) <- '.') accessible
+      done;
+      !removed
+    in
+    let example_result = go example in
+    Utils.assert_int 43 example_result;
+    let real_result = go (Lazy.force real) in
+    Printf.printf "Day 4 part 1: %d\n" real_result
+  ;;
+end
+
 module Three = struct
   let example = {|
 987654321111111
@@ -249,4 +352,4 @@ L82
   ;;
 end
 
-let () = Three.part2 ()
+let () = Four.part2 ()
