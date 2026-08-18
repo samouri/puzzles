@@ -33,8 +33,109 @@ module Utils = struct
   ;;
 end
 
-let example = {|
-  |}
+module Six = struct
+  let example = {|
+123 328  51 64 
+ 45 64  387 23 
+  6 98  215 314
+*   +   *   +
+    |}
+
+  type operation =
+    | Mult
+    | Add
+
+  let real = lazy (Utils.read_input 6)
+
+  let parse_operation_line line =
+    Str.split (Str.regexp {| +|}) line
+    |> Array.of_list
+    |> Array.map (function
+      | "+" -> Add
+      | "*" -> Mult
+      | _ as str -> failwith ("Failed to parse operation: " ^ str))
+  ;;
+
+  let parse1 input =
+    let lines = input |> String.trim |> String.split_on_char '\n' in
+    let revved = List.rev lines in
+    let lines, last_line = revved |> List.tl |> List.rev, List.hd revved in
+    let numbers =
+      lines
+      |> List.map (fun line ->
+        Str.split (Str.regexp {| +|}) line |> List.map int_of_string)
+      |> List.to_seq
+      |> Seq.map List.to_seq
+      |> Seq.transpose
+    in
+    let operations = parse_operation_line last_line in
+    numbers, operations
+  ;;
+
+  let parse2 input =
+    let lines = input |> String.trim |> String.split_on_char '\n' in
+    let revved = List.rev lines in
+    let lines, last_line = revved |> List.tl |> List.rev, List.hd revved in
+    let numbers =
+      lines
+      |> List.to_seq
+      |> Seq.map String.to_seq
+      |> Seq.transpose
+      |> Seq.map String.of_seq
+      |> Seq.map (fun s -> if String.trim s = "" then "\n" else s)
+      |> List.of_seq
+      |> String.concat " "
+      |> String.split_on_char '\n'
+      |> List.map (fun line -> Str.split (Str.regexp " +") line |> List.map int_of_string)
+    in
+    let operations = parse_operation_line last_line in
+    numbers, operations
+  ;;
+
+  let resolve numbers ~operation =
+    let perform_operation =
+      match operation with
+      | Add -> ( + )
+      | Mult -> ( * )
+    in
+    List.fold_left perform_operation (List.hd numbers) (List.tl numbers)
+  ;;
+
+  let part1 () =
+    let go input =
+      let numbers, operations = parse1 input in
+      numbers
+      |> Seq.fold_lefti
+           (fun acc i column ->
+             let operation = operations.(i) in
+             let column_result = resolve (List.of_seq column) ~operation in
+             acc + column_result)
+           0
+    in
+    let example_result = go example in
+    Utils.assert_int 4277556 example_result;
+    let real_result = go (Lazy.force real) in
+    Printf.printf "Day 6 part 1: %d\n" real_result
+  ;;
+
+  let part2 () =
+    let go input =
+      let numbers, operations = parse2 input in
+      numbers
+      |> List.to_seq
+      |> Seq.fold_lefti
+           (fun acc i column ->
+             let operation = operations.(i) in
+             let column_result = resolve column ~operation in
+             acc + column_result)
+           0
+    in
+    let example_result = go example in
+    Utils.assert_int 3263827 example_result;
+    let real_result = go (Lazy.force real) in
+    Printf.printf "Day 6 part 2: %d\n" real_result
+  ;;
+end
 
 module Five = struct
   let example = {|
@@ -136,7 +237,7 @@ module Five = struct
     let example_result = go example in
     Utils.assert_int 14 example_result;
     let real_result = go (Lazy.force real) in
-    Printf.printf "Day 5 part 1: %d\n" real_result
+    Printf.printf "Day 5 part 2: %d\n" real_result
   ;;
 end
 
@@ -461,4 +562,4 @@ L82
   ;;
 end
 
-let () = Five.part2 ()
+let () = Six.part2 ()
