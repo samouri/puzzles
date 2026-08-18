@@ -19,6 +19,8 @@
  *)
 #use "debug.ml"
 
+#load "str.cma"
+
 module Utils = struct
   let read_input day =
     let path = Printf.sprintf "./inputs/input_%d.txt" day in
@@ -28,6 +30,113 @@ module Utils = struct
   let assert_int expected actual =
     if actual <> expected
     then failwith (Printf.sprintf "expected %d, got %d" expected actual)
+  ;;
+end
+
+let example = {|
+  |}
+
+module Five = struct
+  let example = {|
+3-5
+10-14
+16-20
+12-18
+
+1
+5
+8
+11
+17
+32
+  |}
+
+  let real = lazy (Utils.read_input 5)
+
+  let parse input =
+    let[@warning "-8"] [ ranges; ingredients ] =
+      input |> String.trim |> Str.split (Str.regexp "\n\n")
+    in
+    let ranges =
+      ranges
+      |> String.split_on_char '\n'
+      |> List.map (fun line ->
+        let[@warning "-8"] [ start; end_ ] = String.split_on_char '-' line in
+        int_of_string start, int_of_string end_)
+    in
+    let ingredients =
+      ingredients |> String.split_on_char '\n' |> List.map int_of_string
+    in
+    ranges, ingredients
+  ;;
+
+  let is_in_range (start, end_) n = start <= n && n <= end_
+
+  let ranges_overlap (start1, end1) (start2, end2) =
+    (* Four cases
+       1. Overlaps left edge
+       2. Overlaps right edge
+       3. Fully surrounds
+       4. Fully surrounded by
+    *)
+    let overlaps_left_edge = start1 <= start2 && start2 <= end1 in
+    let overlaps_right_edge = start1 <= end2 && end2 <= end1 in
+    let fully_surrounds = start1 <= start2 && end2 <= end1 in
+    let fully_surrounded_by = start2 <= start1 && start1 <= end2 in
+    overlaps_left_edge || overlaps_right_edge || fully_surrounds || fully_surrounded_by
+  ;;
+
+  (* Only valid for known overlapping ranges *)
+  let combine_range (start1, end1) (start2, end2) = min start1 start2, max end1 end2
+
+  (* Currently performing an O(n) scan through all the ranges. A segment tree
+     would be O(lg n). But I feel confident there is an even better way. *)
+  let part1 () =
+    let go input =
+      let ranges, ingredients = parse input in
+      List.fold_left
+        (fun sum ingredient ->
+          let is_fresh = List.exists (fun range -> is_in_range range ingredient) ranges in
+          if is_fresh then sum + 1 else sum)
+        0
+        ingredients
+    in
+    let example_result = go example in
+    Utils.assert_int 3 example_result;
+    let real_result = go (Lazy.force real) in
+    Printf.printf "Day 5 part 1: %d\n" real_result
+  ;;
+
+  (* given a list of ranges, simplify until it cannot be simplifed anymore.*)
+  let rec simplify ranges =
+    let simplified_ranges =
+      List.fold_left
+        (fun acc range ->
+          let overlaps = ranges_overlap range in
+          let overlapping_ranges = List.filter overlaps acc in
+          let non_overlapping_ranges = List.filter (Fun.negate overlaps) acc in
+          let simplified_overlap =
+            List.fold_left combine_range range overlapping_ranges
+          in
+          simplified_overlap :: non_overlapping_ranges)
+        []
+        ranges
+    in
+    if List.length simplified_ranges = List.length ranges
+    then simplified_ranges
+    else simplify simplified_ranges
+  ;;
+
+  let part2 () =
+    let go input =
+      let ranges, _ingredients = parse input in
+      let ranges = simplify ranges in
+      List.fold_left (fun sum (start, end_) -> sum + (end_ - start + 1)) 0 ranges
+    in
+    let example_result = go example in
+    Utils.assert_int 14 example_result;
+    let real_result = go (Lazy.force real) in
+    Printf.printf "Day 5 part 1: %d\n" real_result
   ;;
 end
 
@@ -352,4 +461,4 @@ L82
   ;;
 end
 
-let () = Four.part2 ()
+let () = Five.part2 ()
