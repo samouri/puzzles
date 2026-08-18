@@ -33,6 +33,106 @@ module Utils = struct
   ;;
 end
 
+module Seven = struct
+  let example =
+    {|
+.......S.......
+...............
+.......^.......
+...............
+......^.^......
+...............
+.....^.^.^.....
+...............
+....^.^...^....
+...............
+...^.^...^.^...
+...............
+..^...^.....^..
+...............
+.^.^.^.^.^...^.
+...............
+  |}
+  ;;
+
+  let real = lazy (Utils.read_input 7)
+
+  let parse input =
+    input
+    |> String.trim
+    |> String.split_on_char '\n'
+    |> List.map String.to_seq
+    |> List.map Array.of_seq
+  ;;
+
+  (* Does not maintain ordering *)
+  let upsert_assoc key fn list =
+    let current = List.assoc_opt key list in
+    let original_without = List.remove_assoc key list in
+    let new_value = fn current in
+    (key, new_value) :: original_without
+  ;;
+
+  let descend (beams, splits) line =
+    List.fold_left
+      (fun (acc, splits) (index, count) ->
+        if line.(index) != '^'
+        then (
+          let acc =
+            upsert_assoc
+              index
+              (function
+                | None -> count
+                | Some c -> count + c)
+              acc
+          in
+          acc, splits)
+        else (
+          let acc =
+            acc
+            |> upsert_assoc (index - 1) (function
+              | None -> count
+              | Some c -> count + c)
+            |> upsert_assoc (index + 1) (function
+              | None -> count
+              | Some c -> count + c)
+          in
+          acc, splits + 1))
+      ([], splits)
+      beams
+  ;;
+
+  let part1 () =
+    let go input =
+      let grid = parse input in
+      let first_line, lines = List.hd grid, List.tl grid in
+      let start = Array.find_index (Char.equal 'S') first_line |> Option.get in
+      let beams = [ start, 1 ] in
+      let final_beams, splits = List.fold_left descend (beams, 0) lines in
+      splits
+    in
+    let example_result = go example in
+    Utils.assert_int 21 example_result;
+    let real_result = go (Lazy.force real) in
+    Printf.printf "Day 7 part 1: %d\n" real_result
+  ;;
+
+  let part2 () =
+    let go input =
+      let grid = parse input in
+      let first_line, lines = List.hd grid, List.tl grid in
+      let start = Array.find_index (Char.equal 'S') first_line |> Option.get in
+      let beams = [ start, 1 ] in
+      let final_beams, splits = List.fold_left descend (beams, 0) lines in
+      final_beams |> List.map snd |> List.fold_left ( + ) 0
+    in
+    let example_result = go example in
+    Utils.assert_int 40 example_result;
+    let real_result = go (Lazy.force real) in
+    Printf.printf "Day 7 part 2: %d\n" real_result
+  ;;
+end
+
 module Six = struct
   let example = {|
 123 328  51 64 
@@ -562,4 +662,4 @@ L82
   ;;
 end
 
-let () = Six.part2 ()
+let () = Seven.part2 ()
